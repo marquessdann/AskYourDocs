@@ -158,7 +158,7 @@ Veja `backend/.env.example` para a lista completa. As mais importantes:
 
 | Variável | Valores | Efeito |
 |---|---|---|
-| `EMBEDDING_PROVIDER` | `local` \| `openai` | `local` usa `sentence-transformers` (grátis, offline). `openai` usa `text-embedding-3-small`. |
+| `EMBEDDING_PROVIDER` | `local` \| `openai` \| `google` | `local` usa `sentence-transformers` (grátis, offline, mas pesado). `openai` usa `text-embedding-3-small` (pago). `google` usa a API do Gemini (grátis, sem cartão). |
 | `LLM_PROVIDER` | `openai` \| `anthropic` | Qual API gera a resposta final. |
 | `MIN_RELEVANCE_SCORE` | `0.0`–`1.0` | Quão exigente é o gate anti-alucinação. |
 | `CHUNK_SIZE_CHARS` / `CHUNK_OVERLAP_CHARS` | inteiros | Tamanho/overlap dos trechos na ingestão. |
@@ -189,9 +189,13 @@ local e offline. A abstração `EmbeddingProvider` deixa claro que trocar para
 > sozinho já passa de 500MB de RAM ao carregar o modelo — isso derruba (OOM kill) hosts
 > free-tier pequenos como o plano gratuito do Render (512MB). Por isso o PyTorch foi
 > movido para um arquivo de dependências separado (`requirements-local-embeddings.txt`,
-> só instalado se você realmente for usar `EMBEDDING_PROVIDER=local`), e o deploy gratuito
-> sugerido abaixo usa `EMBEDDING_PROVIDER=openai` em produção — local fica ótimo para rodar
-> na sua própria máquina, onde RAM não é um problema.
+> só instalado se você realmente for usar `EMBEDDING_PROVIDER=local`). Para o deploy
+> gratuito, a OpenAI também não é ideal na prática: contas novas em 2026 não recebem mais
+> crédito grátis de forma confiável, exigindo cartão para qualquer uso. O provedor
+> `google` (API do Gemini) resolve as duas pontas: é só uma chamada HTTP leve (sem
+> PyTorch) e tem tier gratuito real sem cartão — por isso é o padrão recomendado abaixo
+> para produção. `local` continua sendo uma ótima opção para rodar na sua máquina, onde
+> RAM não é um problema.
 
 **Por que endpoints síncronos (não `async def`) no FastAPI?**
 As chamadas de I/O aqui (Postgres via `psycopg`, SDKs da OpenAI/Anthropic) são todas
@@ -229,9 +233,10 @@ de verdade.
 2. **Backend (FastAPI):** crie um Web Service no [Render](https://render.com) apontando
    para a pasta `backend/` (ele detecta o `Dockerfile` automaticamente). Configure as
    variáveis de ambiente do `.env.example` no painel do Render, incluindo o
-   `DATABASE_URL` do passo 1. **Use `EMBEDDING_PROVIDER=openai`** (com `EMBEDDING_DIMENSION=1536`
-   e um `OPENAI_API_KEY`) em vez de `local` — o plano gratuito do Render só tem 512MB de
-   RAM, insuficiente para o PyTorch que o modelo local exige (ver nota técnica acima).
+   `DATABASE_URL` do passo 1. **Use `EMBEDDING_PROVIDER=google`** (com `EMBEDDING_DIMENSION=768`
+   e um `GOOGLE_API_KEY` gerado em [aistudio.google.com/apikey](https://aistudio.google.com/apikey),
+   sem cartão) em vez de `local` — o plano gratuito do Render só tem 512MB de RAM,
+   insuficiente para o PyTorch que o modelo local exige (ver nota técnica acima).
 3. **Frontend:** publique a pasta `frontend/` no [Vercel](https://vercel.com) (ou Netlify)
    como site estático. Defina `window.ASKYOURDOCS_API_BASE` (no `index.html`, antes de
    carregar `app.js`) para a URL pública do backend no Render.

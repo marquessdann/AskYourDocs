@@ -31,6 +31,34 @@ class OpenAIEmbeddingProvider(EmbeddingProvider):
         return [item.embedding for item in response.data]
 
 
+class GoogleEmbeddingProvider(EmbeddingProvider):
+    """Uses the Gemini API's embeddings endpoint: free tier, no credit card required."""
+
+    def __init__(self, cfg: Settings):
+        if not cfg.google_api_key:
+            raise LLMProviderError("GOOGLE_API_KEY is required for embedding_provider=google")
+        import google.generativeai as genai
+
+        genai.configure(api_key=cfg.google_api_key)
+        self._genai = genai
+        self._model = f"models/{cfg.google_embedding_model}"
+        self.dimension = cfg.embedding_dimension
+
+    def embed(self, texts: list[str]) -> list[list[float]]:
+        try:
+            return [
+                self._genai.embed_content(
+                    model=self._model,
+                    content=text,
+                    task_type="retrieval_document",
+                    output_dimensionality=self.dimension,
+                )["embedding"]
+                for text in texts
+            ]
+        except Exception as exc:  # noqa: BLE001
+            raise LLMProviderError(f"Gemini embeddings request failed: {exc}") from exc
+
+
 class LocalEmbeddingProvider(EmbeddingProvider):
     """Runs a small sentence-transformers model locally: free, offline, no API key."""
 
@@ -52,4 +80,6 @@ class LocalEmbeddingProvider(EmbeddingProvider):
 def get_embedding_provider() -> EmbeddingProvider:
     if settings.embedding_provider == "openai":
         return OpenAIEmbeddingProvider(settings)
+    if settings.embedding_provider == "google":
+        return GoogleEmbeddingProvider(settings)
     return LocalEmbeddingProvider(settings)

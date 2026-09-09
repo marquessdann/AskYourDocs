@@ -14,11 +14,14 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/askyourdocs"
 
     # --- Embeddings ---
-    # "local" uses sentence-transformers (no API key, no cost). "openai" uses text-embedding-3-small.
-    embedding_provider: Literal["local", "openai"] = "local"
-    embedding_dimension: int = 384  # 384 for the local MiniLM model, 1536 for text-embedding-3-small
+    # "local" uses sentence-transformers (no API key, but pulls in PyTorch — too heavy for
+    # small free-tier hosts). "openai" uses text-embedding-3-small (paid). "google" uses the
+    # Gemini API's free tier (no credit card required) — the easiest option for a free deploy.
+    embedding_provider: Literal["local", "openai", "google"] = "local"
+    embedding_dimension: int = 384  # 384 (local MiniLM), 1536 (text-embedding-3-small), 768 (Gemini)
     local_embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
     openai_embedding_model: str = "text-embedding-3-small"
+    google_embedding_model: str = "text-embedding-004"
 
     # --- LLM (answer generation) ---
     llm_provider: Literal["openai", "anthropic"] = "openai"
@@ -27,6 +30,7 @@ class Settings(BaseSettings):
 
     openai_api_key: str | None = None
     anthropic_api_key: str | None = None
+    google_api_key: str | None = None
 
     # --- Ingestion ---
     chunk_size_chars: int = 1000
