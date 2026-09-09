@@ -37,26 +37,27 @@ class GoogleEmbeddingProvider(EmbeddingProvider):
     def __init__(self, cfg: Settings):
         if not cfg.google_api_key:
             raise LLMProviderError("GOOGLE_API_KEY is required for embedding_provider=google")
-        import google.generativeai as genai
+        from google import genai
 
-        genai.configure(api_key=cfg.google_api_key)
-        self._genai = genai
-        self._model = f"models/{cfg.google_embedding_model}"
+        self._client = genai.Client(api_key=cfg.google_api_key)
+        self._model = cfg.google_embedding_model
         self.dimension = cfg.embedding_dimension
 
     def embed(self, texts: list[str]) -> list[list[float]]:
+        from google.genai.types import EmbedContentConfig
+
         try:
-            return [
-                self._genai.embed_content(
-                    model=self._model,
-                    content=text,
-                    task_type="retrieval_document",
+            response = self._client.models.embed_content(
+                model=self._model,
+                contents=texts,
+                config=EmbedContentConfig(
+                    task_type="RETRIEVAL_DOCUMENT",
                     output_dimensionality=self.dimension,
-                )["embedding"]
-                for text in texts
-            ]
+                ),
+            )
         except Exception as exc:  # noqa: BLE001
             raise LLMProviderError(f"Gemini embeddings request failed: {exc}") from exc
+        return [embedding.values for embedding in response.embeddings]
 
 
 class LocalEmbeddingProvider(EmbeddingProvider):

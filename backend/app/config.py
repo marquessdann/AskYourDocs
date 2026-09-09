@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     embedding_dimension: int = 384  # 384 (local MiniLM), 1536 (text-embedding-3-small), 768 (Gemini)
     local_embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
     openai_embedding_model: str = "text-embedding-3-small"
-    google_embedding_model: str = "text-embedding-004"
+    google_embedding_model: str = "gemini-embedding-001"
 
     # --- LLM (answer generation) ---
     llm_provider: Literal["openai", "anthropic"] = "openai"
