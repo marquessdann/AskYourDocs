@@ -9,4 +9,3 @@ pypdf==5.1.0
 python-multipart==0.0.20
 openai==1.58.1
 anthropic==0.42.0
-sentence-transformers==3.3.1

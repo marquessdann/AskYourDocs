@@ -185,6 +185,14 @@ chave de API paga só para testar o upload de um PDF. `sentence-transformers` ro
 local e offline. A abstração `EmbeddingProvider` deixa claro que trocar para
 `text-embedding-3-small` é uma decisão de configuração, não de código.
 
+> **Nota de deploy real:** `sentence-transformers` traz PyTorch como dependência, que
+> sozinho já passa de 500MB de RAM ao carregar o modelo — isso derruba (OOM kill) hosts
+> free-tier pequenos como o plano gratuito do Render (512MB). Por isso o PyTorch foi
+> movido para um arquivo de dependências separado (`requirements-local-embeddings.txt`,
+> só instalado se você realmente for usar `EMBEDDING_PROVIDER=local`), e o deploy gratuito
+> sugerido abaixo usa `EMBEDDING_PROVIDER=openai` em produção — local fica ótimo para rodar
+> na sua própria máquina, onde RAM não é um problema.
+
 **Por que endpoints síncronos (não `async def`) no FastAPI?**
 As chamadas de I/O aqui (Postgres via `psycopg`, SDKs da OpenAI/Anthropic) são todas
 síncronas. O FastAPI já executa handlers síncronos numa threadpool automaticamente, então
@@ -221,7 +229,9 @@ de verdade.
 2. **Backend (FastAPI):** crie um Web Service no [Render](https://render.com) apontando
    para a pasta `backend/` (ele detecta o `Dockerfile` automaticamente). Configure as
    variáveis de ambiente do `.env.example` no painel do Render, incluindo o
-   `DATABASE_URL` do passo 1.
+   `DATABASE_URL` do passo 1. **Use `EMBEDDING_PROVIDER=openai`** (com `EMBEDDING_DIMENSION=1536`
+   e um `OPENAI_API_KEY`) em vez de `local` — o plano gratuito do Render só tem 512MB de
+   RAM, insuficiente para o PyTorch que o modelo local exige (ver nota técnica acima).
 3. **Frontend:** publique a pasta `frontend/` no [Vercel](https://vercel.com) (ou Netlify)
    como site estático. Defina `window.ASKYOURDOCS_API_BASE` (no `index.html`, antes de
    carregar `app.js`) para a URL pública do backend no Render.
