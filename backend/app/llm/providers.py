@@ -64,8 +64,41 @@ class AnthropicChatProvider(LLMProvider):
         return response.content[0].text
 
 
+class GoogleChatProvider(LLMProvider):
+    """Uses the Gemini API's chat models: free tier, no credit card required."""
+
+    def __init__(self, cfg: Settings):
+        if not cfg.google_api_key:
+            raise LLMProviderError("GOOGLE_API_KEY is required for llm_provider=google")
+        from google import genai
+
+        self._client = genai.Client(api_key=cfg.google_api_key)
+        self._model = cfg.google_chat_model
+
+    def generate(self, system_prompt: str, user_prompt: str) -> str:
+        from google.genai.types import GenerateContentConfig
+
+        try:
+            response = self._client.models.generate_content(
+                model=self._model,
+                contents=user_prompt,
+                config=GenerateContentConfig(
+                    system_instruction=system_prompt,
+                    temperature=0.1,
+                ),
+            )
+        except Exception as exc:  # noqa: BLE001
+            raise LLMProviderError(f"Gemini chat request failed: {exc}") from exc
+
+        if not response.text:
+            raise LLMProviderError("Gemini returned an empty response")
+        return response.text
+
+
 @lru_cache
 def get_llm_provider() -> LLMProvider:
     if settings.llm_provider == "anthropic":
         return AnthropicChatProvider(settings)
+    if settings.llm_provider == "google":
+        return GoogleChatProvider(settings)
     return OpenAIChatProvider(settings)

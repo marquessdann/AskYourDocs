@@ -24,9 +24,11 @@ class Settings(BaseSettings):
     google_embedding_model: str = "gemini-embedding-001"
 
     # --- LLM (answer generation) ---
-    llm_provider: Literal["openai", "anthropic"] = "openai"
+    # "google" uses the Gemini API's free tier (no credit card) — the easiest free option.
+    llm_provider: Literal["openai", "anthropic", "google"] = "openai"
     openai_chat_model: str = "gpt-4o-mini"
     anthropic_chat_model: str = "claude-3-5-haiku-latest"
+    google_chat_model: str = "gemini-flash-latest"
 
     openai_api_key: str | None = None
     anthropic_api_key: str | None = None

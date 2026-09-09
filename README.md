@@ -159,7 +159,7 @@ Veja `backend/.env.example` para a lista completa. As mais importantes:
 | Variável | Valores | Efeito |
 |---|---|---|
 | `EMBEDDING_PROVIDER` | `local` \| `openai` \| `google` | `local` usa `sentence-transformers` (grátis, offline, mas pesado). `openai` usa `text-embedding-3-small` (pago). `google` usa a API do Gemini (grátis, sem cartão). |
-| `LLM_PROVIDER` | `openai` \| `anthropic` | Qual API gera a resposta final. |
+| `LLM_PROVIDER` | `openai` \| `anthropic` \| `google` | Qual API gera a resposta final. `google` reaproveita a mesma `GOOGLE_API_KEY` dos embeddings e é grátis. |
 | `MIN_RELEVANCE_SCORE` | `0.0`–`1.0` | Quão exigente é o gate anti-alucinação. |
 | `CHUNK_SIZE_CHARS` / `CHUNK_OVERLAP_CHARS` | inteiros | Tamanho/overlap dos trechos na ingestão. |
 
@@ -233,10 +233,13 @@ de verdade.
 2. **Backend (FastAPI):** crie um Web Service no [Render](https://render.com) apontando
    para a pasta `backend/` (ele detecta o `Dockerfile` automaticamente). Configure as
    variáveis de ambiente do `.env.example` no painel do Render, incluindo o
-   `DATABASE_URL` do passo 1. **Use `EMBEDDING_PROVIDER=google`** (com `EMBEDDING_DIMENSION=768`
-   e um `GOOGLE_API_KEY` gerado em [aistudio.google.com/apikey](https://aistudio.google.com/apikey),
-   sem cartão) em vez de `local` — o plano gratuito do Render só tem 512MB de RAM,
-   insuficiente para o PyTorch que o modelo local exige (ver nota técnica acima).
+   `DATABASE_URL` do passo 1. **Use `EMBEDDING_PROVIDER=google` e `LLM_PROVIDER=google`**
+   (com `EMBEDDING_DIMENSION=768` e um `GOOGLE_API_KEY` gerado em
+   [aistudio.google.com/apikey](https://aistudio.google.com/apikey), sem cartão) em vez de
+   `local`/OpenAI/Anthropic — o plano gratuito do Render só tem 512MB de RAM, insuficiente
+   para o PyTorch que o modelo local exige (ver nota técnica acima), e tanto a OpenAI
+   quanto a Anthropic exigem crédito pago para uso via API (sem tier grátis confiável em
+   2026), enquanto o Gemini cobre embeddings e chat com a mesma chave, de graça.
 3. **Frontend:** publique a pasta `frontend/` no [Vercel](https://vercel.com) (ou Netlify)
    como site estático. Defina `window.ASKYOURDOCS_API_BASE` (no `index.html`, antes de
    carregar `app.js`) para a URL pública do backend no Render.
