@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AskYourDocs</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>AskYourDocs</h1>
+    <p>Faça upload de PDFs e converse com o conteúdo deles.</p>
+  </header>
+
+  <main>
+    <section class="panel" id="upload-panel">
+      <h2>1. Documentos</h2>
+      <form id="upload-form">
+        <input type="file" id="file-input" accept="application/pdf" required />
+        <button type="submit">Enviar PDF</button>
+      </form>
+      <p id="upload-status" class="status"></p>
+      <ul id="document-list"></ul>
+    </section>
+
+    <section class="panel" id="chat-panel">
+      <h2>2. Pergunte</h2>
+      <div id="chat-log"></div>
+      <form id="chat-form">
+        <input type="text" id="question-input" placeholder="Ex: qual a política de reembolso?" required />
+        <button type="submit">Perguntar</button>
+      </form>
+    </section>
+  </main>
+
+  <script>
+    const API_BASE = window.ASKYOURDOCS_API_BASE || "https://askyourdocs-11yw.onrender.com";
+  </script>
+  <script src="app.js"></script>
+</body>
+</html>

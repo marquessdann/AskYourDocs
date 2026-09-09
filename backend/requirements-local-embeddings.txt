@@ -1,0 +1,5 @@
+-r requirements.txt
+# Only needed if EMBEDDING_PROVIDER=local. Pulls in PyTorch, which is heavy
+# (~1GB+) and memory-hungry — not suitable for small free-tier hosts like
+# Render's free plan (512MB RAM). Use EMBEDDING_PROVIDER=openai there instead.
+sentence-transformers==3.3.1
